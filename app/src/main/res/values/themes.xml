@@ -1,8 +1,15 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
     <style name="Base.Theme.YourDiary" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/diary_ochre</item>
+        <item name="colorOnPrimary">@color/diary_paper</item>
+        <item name="colorPrimaryContainer">@color/diary_ochre_container</item>
+        <item name="colorOnPrimaryContainer">@color/diary_on_ochre_container</item>
+        <item name="colorSurface">@color/diary_paper</item>
+        <item name="colorOnSurface">@color/diary_ink</item>
+        <item name="colorSurfaceVariant">@color/diary_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/diary_ink</item>
+        <item name="colorOutline">@color/diary_outline</item>
+        <item name="android:fontFamily">sans</item>
     </style>
 
     <style name="Theme.YourDiary" parent="Base.Theme.YourDiary" />

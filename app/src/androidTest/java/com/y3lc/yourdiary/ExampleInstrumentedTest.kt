@@ -1,24 +1,27 @@
 package com.y3lc.yourdiary
 
-import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
-
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withId
 import org.junit.Test
 import org.junit.runner.RunWith
 
-import org.junit.Assert.*
-
-/**
- * Instrumented test, which will execute on an Android device.
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
 @RunWith(AndroidJUnit4::class)
 class ExampleInstrumentedTest {
-    @Test
-    fun useAppContext() {
-        // Context of the app under test.
-        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.y3lc.yourdiary", appContext.packageName)
+
+  @Test
+  fun initialPinSetupNavigatesToTodayAndShowsTheOnlyCreateEntryAction() {
+    ActivityScenario.launch(MainActivity::class.java).use {
+      onView(withId(R.id.pinInput)).perform(replaceText("2468"))
+      onView(withId(R.id.unlockWithPinButton)).perform(click())
+      onView(withId(R.id.fab)).check(matches(isDisplayed()))
+      onView(withId(R.id.tagFilterGroup)).check(doesNotExist())
     }
+  }
 }

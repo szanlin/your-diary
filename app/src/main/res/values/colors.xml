@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="diary_paper">#FFFFF9F0</color>
+    <color name="diary_ink">#FF25231F</color>
+    <color name="diary_ochre">#FF725C29</color>
+    <color name="diary_ochre_container">#FFF6E0A5</color>
+    <color name="diary_on_ochre_container">#FF261A00</color>
+    <color name="diary_surface_variant">#FFECE6DC</color>
+    <color name="diary_outline">#FF7A766E</color>
 </resources>
