@@ -12,6 +12,7 @@ import com.google.android.material.chip.Chip
 import com.y3lc.yourdiary.diary.domain.TagId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
 import java.time.ZoneId
 
 class HistoryFragment : Fragment() {
@@ -20,6 +21,7 @@ class HistoryFragment : Fragment() {
   private val binding: FragmentHistoryBinding
     get() = requireNotNull(bindingReference)
   private var selectedTagId: TagId? = null
+  private val selectedDate: LocalDate? by lazy { parseRequestedHistoryDate(arguments?.getString("selectedDate")) }
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -61,13 +63,28 @@ class HistoryFragment : Fragment() {
   private fun loadEntries() {
     launchDiaryTask {
       val query = binding.historySearchInput.text?.toString().orEmpty()
-      val entries = withContext(Dispatchers.IO) { getDiaryEntryUseCases()?.searchHistory(query, selectedTagId).orEmpty() }
+      val entries = withContext(Dispatchers.IO) {
+        getDiaryEntryUseCases()?.searchHistory(query, selectedTagId).orEmpty()
+      }
       if (bindingReference == null || !isDiarySessionUnlocked()) return@launchDiaryTask
       binding.historyEmptyState.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
       binding.historyEntriesContainer.removeAllViews()
+      var targetDateView: View? = null
       groupEntriesByDate(entries, ZoneId.systemDefault()).forEach { group ->
         addTimelineDateGroup(binding.historyEntriesContainer, group.date, group.entries) { entry ->
           findNavController().navigate(R.id.readerFragment, Bundle().apply { putString("entryId", entry.id.value) })
+        }
+        if (group.date == selectedDate) targetDateView = binding.historyEntriesContainer.getChildAt(binding.historyEntriesContainer.childCount - 1)
+      }
+      targetDateView?.let { target ->
+        val scrollView = binding.root
+        val targetScrollY = getHistoryTargetScrollY(binding.historyEntriesContainer.top, target.top)
+        scrollView.post {
+          if (!scrollView.isAttachedToWindow) return@post
+          scrollView.smoothScrollTo(
+            0,
+            targetScrollY,
+          )
         }
       }
     }

@@ -1,84 +1,139 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:paddingStart="@dimen/page_horizontal_margin"
-    android:paddingTop="20dp"
-    android:paddingEnd="@dimen/page_horizontal_margin"
-    android:paddingBottom="32dp">
+    android:layout_height="match_parent">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/editorContentScroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:paddingStart="@dimen/page_horizontal_margin"
+        android:paddingTop="20dp"
+        android:paddingEnd="@dimen/page_horizontal_margin"
+        android:paddingBottom="32dp"
+        app:layout_constraintBottom_toTopOf="@id/editorToolbar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/entryCreatedAtText"
-            style="@style/TextAppearance.Material3.LabelLarge"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/entry_created_time_placeholder"
-            android:textColor="?attr/colorOnSurfaceVariant" />
+            android:orientation="vertical">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:hint="@string/entry_markdown_hint">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/entryMarkdownInput"
+            <TextView
+                android:id="@+id/entryCreatedAtText"
+                style="@style/TextAppearance.Material3.LabelLarge"
                 android:layout_width="match_parent"
-                android:layout_height="180dp"
-                android:gravity="top|start"
-                android:inputType="textMultiLine|textCapSentences"
-                android:importantForAutofill="no"
-                android:maxLines="12" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_height="wrap_content"
+                android:text="@string/entry_created_time_placeholder"
+                android:textColor="?attr/colorOnSurfaceVariant" />
 
-        <TextView
-            style="@style/TextAppearance.Material3.LabelMedium"
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:hint="@string/entry_markdown_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/entryMarkdownInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    android:gravity="top|start"
+                    android:importantForAutofill="no"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:maxLines="12" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                style="@style/TextAppearance.Material3.LabelMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/auto_save_hint"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <TextView
+                android:id="@+id/selectedPhotosText"
+                style="@style/TextAppearance.Material3.LabelMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:text="@string/selected_photo_count_empty"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/selectedPhotosList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/editorToolbar"
+        android:layout_width="0dp"
+        android:layout_height="72dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:cardBackgroundColor="?attr/colorSurface"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="8dp">
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/auto_save_hint"
-            android:textColor="?attr/colorOnSurfaceVariant" />
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/selectPhotosButton"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="wrap_content"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:text="@string/select_photos"
-            app:icon="@drawable/ic_photo" />
+            android:layout_weight="1"
+            android:contentDescription="@string/select_photos"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
+            app:icon="@drawable/ic_photo"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp" />
 
-        <TextView
-            android:id="@+id/selectedPhotosText"
-            style="@style/TextAppearance.Material3.LabelMedium"
-            android:layout_width="match_parent"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/insertEmojiButton"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/selected_photo_count_empty"
-            android:textColor="?attr/colorOnSurfaceVariant" />
-
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/selectedPhotosList"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:chipSpacingHorizontal="8dp"
-            app:chipSpacingVertical="8dp" />
+            android:layout_weight="1"
+            android:contentDescription="@string/insert_emoji"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
+            app:icon="@drawable/ic_emoji"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/manageTagsButton"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="wrap_content"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/manage_tags"
-            app:icon="@drawable/ic_tag" />
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+            android:layout_weight="1"
+            android:contentDescription="@string/manage_tags"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
+            app:icon="@drawable/ic_tag"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+</androidx.constraintlayout.widget.ConstraintLayout>

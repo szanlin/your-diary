@@ -40,7 +40,9 @@
         android:id="@+id/historyFragment"
         android:name="com.y3lc.yourdiary.HistoryFragment"
         android:label="@string/history_title"
-        tools:layout="@layout/fragment_history" />
+        tools:layout="@layout/fragment_history">
+        <argument android:name="selectedDate" app:argType="string" android:defaultValue="" />
+    </fragment>
     <fragment
         android:id="@+id/trashFragment"
         android:name="com.y3lc.yourdiary.TrashFragment"

@@ -7,6 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.core.widget.doAfterTextChanged
 import androidx.navigation.fragment.findNavController
@@ -64,9 +66,22 @@ class EditorFragment : Fragment() {
     wasNewEntry = savedInstanceState?.getBoolean("wasNew") ?: arguments?.getBoolean("wasNew", false) ?: false
     binding.entryMarkdownInput.doAfterTextChanged { markdown -> saveMarkdown(markdown?.toString().orEmpty()) }
     binding.selectPhotosButton.isEnabled = false
+    binding.insertEmojiButton.isEnabled = false
+    binding.manageTagsButton.isEnabled = false
+    val baseToolbarMargin = (16 * resources.displayMetrics.density).toInt()
+    ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+      val imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+      val systemBarsBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+      val toolbarParams = binding.editorToolbar.layoutParams as ViewGroup.MarginLayoutParams
+      toolbarParams.bottomMargin = baseToolbarMargin + (imeBottom - systemBarsBottom).coerceAtLeast(0)
+      binding.editorToolbar.layoutParams = toolbarParams
+      insets
+    }
+    ViewCompat.requestApplyInsets(binding.root)
     binding.selectPhotosButton.setOnClickListener {
       pickPhotos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
+    binding.insertEmojiButton.setOnClickListener { showEmojiDialog() }
     binding.manageTagsButton.setOnClickListener { showTagDialog() }
     loadOrCreateEntry()
   }
@@ -108,6 +123,8 @@ class EditorFragment : Fragment() {
       binding.entryMarkdownInput.setText(entry.markdown)
       renderSelectedPhotos()
       binding.selectPhotosButton.isEnabled = true
+      binding.insertEmojiButton.isEnabled = true
+      binding.manageTagsButton.isEnabled = true
       loadingEntry = false
     }
   }
@@ -144,6 +161,21 @@ class EditorFragment : Fragment() {
         }
         .show()
     }
+  }
+
+  private fun showEmojiDialog() {
+    val emojis = arrayOf("😊", "😂", "🥰", "😌", "😢", "😡", "🎉", "❤️")
+    MaterialAlertDialogBuilder(requireContext())
+      .setTitle(R.string.insert_emoji)
+      .setItems(emojis) { _, selectedIndex ->
+        val emoji = emojis[selectedIndex]
+        val input = binding.entryMarkdownInput
+        val insertionIndex = input.selectionStart.coerceIn(0, input.text?.length ?: 0)
+        input.text?.insert(insertionIndex, emoji)
+        input.setSelection(insertionIndex + emoji.length)
+        input.requestFocus()
+      }
+      .show()
   }
 
   private fun importSelectedPhotos(uris: List<Uri>) {

@@ -17,6 +17,7 @@
     <string name="entry_markdown_hint">用 Markdown 记录此刻</string>
     <string name="auto_save_hint">内容会自动保存；创建时间不可编辑。</string>
     <string name="select_photos">从相册选择照片</string>
+    <string name="insert_emoji">插入表情</string>
     <string name="selected_photo_count_empty">尚未选择照片</string>
     <string name="selected_photo_count">已添加 %1$d 张照片</string>
     <string name="photo_default_name">照片 %1$d</string>
@@ -76,4 +77,9 @@
     <string name="biometric_use_pin">使用 PIN</string>
     <string name="biometric_enable_failed">未启用生物识别快捷解锁；仍可使用 PIN 访问日记。</string>
     <string name="biometric_unlock_failed">生物识别未完成，请使用 PIN 解锁。</string>
+    <string name="today_calendar_recent_days">最近 7 天</string>
+    <string name="today_calendar_has_entries">%1$s，有日记，点按打开历史</string>
+    <string name="today_calendar_no_entries">%1$s，无日记，点按打开历史</string>
+    <string name="today_calendar_today_has_entries">今天，%1$s，有日记，点按打开历史</string>
+    <string name="today_calendar_today_no_entries">今天，%1$s，无日记，点按打开历史</string>
 </resources>

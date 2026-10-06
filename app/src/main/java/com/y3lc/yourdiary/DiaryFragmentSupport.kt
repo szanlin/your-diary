@@ -10,11 +10,14 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.color.MaterialColors
 import com.y3lc.yourdiary.diary.domain.DiaryEntry
 import com.y3lc.yourdiary.diary.domain.DiaryEntryUseCases
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
 
 fun Fragment.getDiaryEntryUseCases(): DiaryEntryUseCases? {
   val activity = requireActivity() as MainActivity
@@ -63,6 +66,64 @@ fun Fragment.addEntryCard(
     setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge)
   })
   card.addView(content)
+  container.addView(card)
+}
+
+fun Fragment.addTodayEntryCard(
+  container: LinearLayout,
+  entry: DiaryEntry,
+  onClick: () -> Unit,
+) {
+  val context = container.context
+  val dateTime = entry.createdAt.atZone(java.time.ZoneId.systemDefault())
+  val card = MaterialCardView(context).apply {
+    layoutParams = LinearLayout.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT,
+      ViewGroup.LayoutParams.WRAP_CONTENT,
+    ).apply { bottomMargin = (12 * resources.displayMetrics.density).toInt() }
+    radius = 24 * resources.displayMetrics.density
+    cardElevation = 0f
+    strokeWidth = 0
+    setCardBackgroundColor(MaterialColors.getColor(context, com.google.android.material.R.attr.colorSurfaceContainerLow, 0))
+    isClickable = true
+    isFocusable = true
+    contentDescription = formatEntryTime(entry)
+    setOnClickListener { onClick() }
+  }
+  val row = LinearLayout(context).apply {
+    orientation = LinearLayout.HORIZONTAL
+    setPadding(20, 18, 20, 18)
+  }
+  val dateColumn = LinearLayout(context).apply {
+    orientation = LinearLayout.VERTICAL
+    layoutParams = LinearLayout.LayoutParams((76 * resources.displayMetrics.density).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+  }
+  dateColumn.addView(TextView(context).apply {
+    text = dateTime.dayOfMonth.toString().padStart(2, '0')
+    setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_DisplaySmall)
+  })
+  dateColumn.addView(TextView(context).apply {
+    text = dateTime.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+    setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelLarge)
+    setTextColor(MaterialColors.getColor(context, com.google.android.material.R.attr.colorOnSurfaceVariant, 0))
+  })
+  val textColumn = LinearLayout(context).apply {
+    orientation = LinearLayout.VERTICAL
+    layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+  }
+  textColumn.addView(TextView(context).apply {
+    text = DateFormat.getTimeFormat(context).format(Date.from(entry.createdAt))
+    setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelLarge)
+    setTextColor(MaterialColors.getColor(context, com.google.android.material.R.attr.colorOnSurfaceVariant, 0))
+  })
+  textColumn.addView(TextView(context).apply {
+    text = entry.markdown.ifBlank { "（无正文）" }
+    maxLines = 3
+    setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleMedium)
+  })
+  row.addView(dateColumn)
+  row.addView(textColumn)
+  card.addView(row)
   container.addView(card)
 }
 

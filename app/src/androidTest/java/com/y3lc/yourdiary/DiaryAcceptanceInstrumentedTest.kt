@@ -2,6 +2,7 @@ package com.y3lc.yourdiary
 
 import android.content.Context
 import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.findNavController
@@ -12,6 +13,7 @@ import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
@@ -82,7 +84,7 @@ class DiaryAcceptanceInstrumentedTest {
       onView(withId(android.R.id.button3)).perform(click())
       onView(withHint(R.string.tag_name_hint)).perform(replaceText(tagName))
       onView(withId(android.R.id.button1)).perform(click())
-      onView(withText(R.string.manage_tags)).perform(click())
+      onView(withId(R.id.manageTagsButton)).perform(click())
       onView(withText(tagName)).check(matches(isDisplayed()))
       onView(withId(android.R.id.button1)).perform(click())
 
@@ -135,6 +137,51 @@ class DiaryAcceptanceInstrumentedTest {
       onView(withId(R.id.entryCreatedAtText)).perform(waitForTextChange(R.string.entry_created_time_placeholder))
       pressBack()
       onView(withText(R.string.today_empty_title)).perform(waitForDisplayed())
+    }
+  }
+
+  @Test
+  fun editorToolbarInsertsEmojiIntoMarkdownAndAutoSavesIt() {
+    ActivityScenario.launch(MainActivity::class.java).use {
+      unlockWithPin("2468")
+      onView(withContentDescription(R.string.create_entry)).perform(click())
+      onView(withId(R.id.entryCreatedAtText)).perform(waitForTextChange(R.string.entry_created_time_placeholder))
+
+      onView(withContentDescription("插入表情")).perform(click())
+      onView(withText("😊")).perform(click())
+      onView(withId(R.id.entryMarkdownInput)).check(matches(withText("😊")))
+
+      pressBack()
+      onView(withText("😊")).perform(waitForDisplayed())
+    }
+  }
+
+  @Test
+  fun editorToolbarUsesFloatingHorizontalInsets() {
+    ActivityScenario.launch(MainActivity::class.java).use {
+      unlockWithPin("2468")
+      onView(withContentDescription(R.string.create_entry)).perform(click())
+      onView(withId(R.id.entryCreatedAtText)).perform(waitForTextChange(R.string.entry_created_time_placeholder))
+      onView(withId(R.id.editorToolbar)).check { toolbar, _ ->
+        val parentWidth = requireNotNull(toolbar.parent as? View).width
+        check(toolbar.width < parentWidth) { "编辑工具栏应作为悬浮容器保留左右留白" }
+        check(toolbar.left > 0 && toolbar.right < parentWidth) { "编辑工具栏应在页面内水平居中" }
+      }
+    }
+  }
+
+  @Test
+  fun editorToolbarMovesAboveVisibleKeyboard() {
+    ActivityScenario.launch(MainActivity::class.java).use {
+      unlockWithPin("2468")
+      onView(withContentDescription(R.string.create_entry)).perform(click())
+      onView(withId(R.id.entryCreatedAtText)).perform(waitForTextChange(R.string.entry_created_time_placeholder))
+      onView(withId(R.id.entryMarkdownInput)).perform(click(), typeText("ime"))
+      onView(withId(R.id.editorToolbar)).check { toolbar, _ ->
+        val layoutParams = toolbar.layoutParams as ViewGroup.MarginLayoutParams
+        val baseMargin = (16 * toolbar.resources.displayMetrics.density).toInt()
+        check(layoutParams.bottomMargin > baseMargin) { "键盘显示时工具栏应上移" }
+      }
     }
   }
 
