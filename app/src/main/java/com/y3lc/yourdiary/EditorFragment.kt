@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
@@ -18,6 +19,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.chip.Chip
 import com.google.android.material.snackbar.Snackbar
 import com.y3lc.yourdiary.diary.domain.EntryId
+import com.y3lc.yourdiary.diary.domain.DiaryEntry
 import com.y3lc.yourdiary.diary.domain.DiaryEntryUseCases
 import com.y3lc.yourdiary.diary.domain.NewPhoto
 import com.y3lc.yourdiary.diary.domain.PhotoId
@@ -30,6 +32,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class EditorFragment : Fragment() {
 
@@ -41,11 +46,18 @@ class EditorFragment : Fragment() {
   private var selectedTagIds: List<TagId> = emptyList()
   private var selectedPhotoIds: List<PhotoId> = emptyList()
   private var loadingEntry = true
+  private var isFinishing = false
   private var useCases: DiaryEntryUseCases? = null
   private var saveJob: Job? = null
+  private var photoImportJob: Job? = null
   private var entryCreationJob: Job? = null
   private val writeMutex = Mutex()
   private val sessionState = EditorSessionState()
+  private val backPressCallback = object : OnBackPressedCallback(true) {
+    override fun handleOnBackPressed() {
+      finishAndExit()
+    }
+  }
   private val pickPhotos = registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
     if (uris.isNotEmpty()) importSelectedPhotos(uris)
   }
@@ -65,9 +77,13 @@ class EditorFragment : Fragment() {
       ?: arguments?.getString("entryId")?.takeIf { it.isNotBlank() }?.let(::EntryId)
     wasNewEntry = savedInstanceState?.getBoolean("wasNew") ?: arguments?.getBoolean("wasNew", false) ?: false
     binding.entryMarkdownInput.doAfterTextChanged { markdown -> saveMarkdown(markdown?.toString().orEmpty()) }
+    binding.entryMarkdownInput.isEnabled = false
     binding.selectPhotosButton.isEnabled = false
     binding.insertEmojiButton.isEnabled = false
     binding.manageTagsButton.isEnabled = false
+    requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backPressCallback)
+    binding.exitEditorButton.setOnClickListener { finishAndExit() }
+    binding.finishEditingButton.setOnClickListener { finishAndExit() }
     val baseToolbarMargin = (16 * resources.displayMetrics.density).toInt()
     ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
       val imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
@@ -95,6 +111,7 @@ class EditorFragment : Fragment() {
   override fun onStop() {
     sessionState.close()
     saveJob?.cancel()
+    photoImportJob?.cancel()
     super.onStop()
   }
 
@@ -119,8 +136,9 @@ class EditorFragment : Fragment() {
       entryId = entry.id
       selectedTagIds = entry.tagIds
       selectedPhotoIds = entry.photoIds
-      binding.entryCreatedAtText.text = formatEntryTime(entry)
+      renderCreatedAt(entry)
       binding.entryMarkdownInput.setText(entry.markdown)
+      binding.entryMarkdownInput.isEnabled = true
       renderSelectedPhotos()
       binding.selectPhotosButton.isEnabled = true
       binding.insertEmojiButton.isEnabled = true
@@ -142,6 +160,41 @@ class EditorFragment : Fragment() {
           }
         }
       }
+    }
+  }
+
+  private fun renderCreatedAt(entry: DiaryEntry) {
+    val createdAt = entry.createdAt.atZone(ZoneId.systemDefault())
+    binding.entryCreatedAtText.text = String.format(Locale.CHINA, "%02d", createdAt.dayOfMonth)
+    binding.entryCreatedMonthYearText.text = "${createdAt.monthValue}月 ${createdAt.year}年"
+    binding.entryCreatedTimeText.text = createdAt.format(DateTimeFormatter.ofPattern("HH:mm", Locale.CHINA))
+  }
+
+  private fun finishAndExit() {
+    if (isFinishing) return
+    isFinishing = true
+    val id = entryId
+    val entryUseCases = useCases
+    if (id == null || entryUseCases == null || loadingEntry) {
+      findNavController().navigateUp()
+      return
+    }
+    val markdown = binding.entryMarkdownInput.text?.toString().orEmpty()
+    val tagIds = selectedTagIds
+    binding.exitEditorButton.isEnabled = false
+    binding.finishEditingButton.isEnabled = false
+    viewLifecycleOwner.lifecycleScope.launch {
+      photoImportJob?.join()
+      saveJob?.join()
+      withContext(Dispatchers.IO) {
+        writeMutex.withLock {
+          if (sessionState.canWrite() && isDiarySessionUnlocked()) {
+            entryUseCases.updateEntry(id, markdown, tagIds)
+            entryUseCases.finishEditing(id, wasNewEntry)
+          }
+        }
+      }
+      if (isAdded) findNavController().navigateUp()
     }
   }
 
@@ -182,7 +235,7 @@ class EditorFragment : Fragment() {
     val id = entryId ?: return
     val entryUseCases = useCases ?: return
     binding.selectPhotosButton.isEnabled = false
-    viewLifecycleOwner.lifecycleScope.launch {
+    photoImportJob = viewLifecycleOwner.lifecycleScope.launch {
       if (!isDiarySessionUnlocked()) return@launch
       val imported = withContext(Dispatchers.IO) {
         if (!sessionState.canWrite() || !isDiarySessionUnlocked()) {
@@ -287,8 +340,10 @@ class EditorFragment : Fragment() {
   override fun onDestroyView() {
     saveJob?.cancel()
     entryCreationJob?.cancel()
+    photoImportJob?.cancel()
     saveJob = null
     entryCreationJob = null
+    photoImportJob = null
     bindingReference = null
     super.onDestroyView()
   }

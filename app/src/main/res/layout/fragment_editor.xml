@@ -4,56 +4,116 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <LinearLayout
+        android:id="@+id/editorHeader"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/exitEditorButton"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="@string/navigate_up"
+            android:minWidth="48dp"
+            app:icon="@drawable/ic_arrow_back"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/finishEditingButton"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="@string/finish_editing" />
+    </LinearLayout>
+
     <androidx.core.widget.NestedScrollView
         android:id="@+id/editorContentScroll"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
         android:paddingStart="@dimen/page_horizontal_margin"
-        android:paddingTop="20dp"
+        android:paddingTop="8dp"
         android:paddingEnd="@dimen/page_horizontal_margin"
         android:paddingBottom="32dp"
         app:layout_constraintBottom_toTopOf="@id/editorToolbar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/editorHeader">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/entryCreatedAtText"
-                style="@style/TextAppearance.Material3.LabelLarge"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/entry_created_time_placeholder"
-                android:textColor="?attr/colorOnSurfaceVariant" />
+                android:gravity="bottom"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/entryCreatedAtText"
+                    style="@style/TextAppearance.Material3.DisplayLarge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/entry_created_time_placeholder"
+                    android:textColor="?attr/colorOnSurface" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginBottom="12dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/entryCreatedMonthYearText"
+                        style="@style/TextAppearance.Material3.TitleLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        android:id="@+id/entryCreatedTimeText"
+                        style="@style/TextAppearance.Material3.LabelLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+            </LinearLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:hint="@string/entry_markdown_hint">
+                android:hint="@string/entry_markdown_hint"
+                app:boxBackgroundMode="none">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/entryMarkdownInput"
                     android:layout_width="match_parent"
-                    android:layout_height="180dp"
+                    android:layout_height="360dp"
+                    android:background="@null"
                     android:gravity="top|start"
                     android:importantForAutofill="no"
                     android:inputType="textMultiLine|textCapSentences"
-                    android:maxLines="12" />
+                    android:maxLines="20"
+                    android:padding="0dp" />
             </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                style="@style/TextAppearance.Material3.LabelMedium"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/auto_save_hint"
-                android:textColor="?attr/colorOnSurfaceVariant" />
 
             <TextView
                 android:id="@+id/selectedPhotosText"

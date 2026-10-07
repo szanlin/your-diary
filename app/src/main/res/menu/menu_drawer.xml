@@ -1,0 +1,20 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/action_history"
+            android:icon="@drawable/ic_calendar"
+            android:title="@string/history_title" />
+        <item
+            android:id="@+id/action_tags"
+            android:icon="@drawable/ic_tag"
+            android:title="@string/manage_tags" />
+        <item
+            android:id="@+id/action_trash"
+            android:icon="@drawable/ic_trash"
+            android:title="@string/trash_title" />
+        <item
+            android:id="@+id/action_settings"
+            android:icon="@drawable/ic_settings"
+            android:title="@string/settings_title" />
+    </group>
+</menu>

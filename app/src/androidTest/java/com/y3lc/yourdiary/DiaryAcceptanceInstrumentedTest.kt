@@ -131,11 +131,61 @@ class DiaryAcceptanceInstrumentedTest {
 
   @Test
   fun leavingAnEmptyNewEntryDoesNotLeaveItOnTodayScreen() {
-    ActivityScenario.launch(MainActivity::class.java).use {
+    ActivityScenario.launch(MainActivity::class.java).use { scenario ->
       unlockWithPin("2468")
       onView(withContentDescription(R.string.create_entry)).perform(click())
       onView(withId(R.id.entryCreatedAtText)).perform(waitForTextChange(R.string.entry_created_time_placeholder))
       pressBack()
+      onView(withText(R.string.today_empty_title)).perform(waitForDisplayed())
+      scenario.onActivity { activity ->
+        check(requireNotNull(activity.getDiaryEntryUseCases()).searchHistory("", null).isEmpty())
+      }
+    }
+  }
+
+  @Test
+  fun finishingAnEmptyNewEntryDoesNotPersistIt() {
+    ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+      unlockWithPin("2468")
+      onView(withContentDescription(R.string.create_entry)).perform(click())
+      onView(withId(R.id.entryCreatedAtText)).perform(waitForTextChange(R.string.entry_created_time_placeholder))
+
+      onView(withText(R.string.finish_editing)).perform(click())
+      onView(withText(R.string.today_empty_title)).perform(waitForDisplayed())
+      scenario.onActivity { activity ->
+        check(requireNotNull(activity.getDiaryEntryUseCases()).searchHistory("", null).isEmpty())
+      }
+    }
+  }
+
+  @Test
+  fun finishingAnEntryPersistsTheLatestText() {
+    val entryText = "完成前的最后一条内容"
+    ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+      unlockWithPin("2468")
+      onView(withContentDescription(R.string.create_entry)).perform(click())
+      onView(withId(R.id.entryCreatedAtText)).perform(waitForTextChange(R.string.entry_created_time_placeholder))
+      onView(withId(R.id.entryMarkdownInput)).perform(replaceText(entryText))
+
+      onView(withText(R.string.finish_editing)).perform(click())
+      onView(withText(entryText)).perform(waitForDisplayed())
+      scenario.onActivity { activity ->
+        check(requireNotNull(activity.getDiaryEntryUseCases()).searchHistory("", null).single().markdown == entryText)
+      }
+    }
+  }
+
+  @Test
+  fun finishingEditorConsumesASecondBackActionBeforeNavigationCompletes() {
+    ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+      unlockWithPin("2468")
+      onView(withContentDescription(R.string.create_entry)).perform(click())
+      onView(withId(R.id.entryCreatedAtText)).perform(waitForTextChange(R.string.entry_created_time_placeholder))
+
+      scenario.onActivity { activity ->
+        activity.findViewById<View>(R.id.finishEditingButton).performClick()
+        activity.onBackPressedDispatcher.onBackPressed()
+      }
       onView(withText(R.string.today_empty_title)).perform(waitForDisplayed())
     }
   }

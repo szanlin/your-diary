@@ -12,8 +12,8 @@ import com.google.android.material.chip.Chip
 import com.y3lc.yourdiary.diary.domain.TagId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
 import java.time.ZoneId
+import java.time.LocalDate
 
 class HistoryFragment : Fragment() {
 
@@ -21,7 +21,10 @@ class HistoryFragment : Fragment() {
   private val binding: FragmentHistoryBinding
     get() = requireNotNull(bindingReference)
   private var selectedTagId: TagId? = null
-  private val selectedDate: LocalDate? by lazy { parseRequestedHistoryDate(arguments?.getString("selectedDate")) }
+  private val shouldFocusTagFilters: Boolean
+    get() = arguments?.getBoolean("focusTagFilters") == true
+  private val selectedDate: LocalDate?
+    get() = arguments?.getString("selectedDate")?.takeIf { it.isNotBlank() }?.let(LocalDate::parse)
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -57,6 +60,19 @@ class HistoryFragment : Fragment() {
           }
         })
       }
+      if (shouldFocusTagFilters) focusTagFilters()
+    }
+  }
+
+  private fun focusTagFilters() {
+    val scrollView = binding.root
+    val tagFilters = binding.tagFilterGroup
+    val targetScrollY = tagFilters.top
+    scrollView.post {
+      if (!scrollView.isAttachedToWindow) return@post
+      scrollView.smoothScrollTo(0, targetScrollY)
+      tagFilters.requestFocus()
+      tagFilters.sendAccessibilityEvent(android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED)
     }
   }
 
@@ -67,24 +83,14 @@ class HistoryFragment : Fragment() {
         getDiaryEntryUseCases()?.searchHistory(query, selectedTagId).orEmpty()
       }
       if (bindingReference == null || !isDiarySessionUnlocked()) return@launchDiaryTask
-      binding.historyEmptyState.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
+      val visibleEntries = entries.filter { entry ->
+        selectedDate == null || entry.createdAt.atZone(ZoneId.systemDefault()).toLocalDate() == selectedDate
+      }
+      binding.historyEmptyState.visibility = if (visibleEntries.isEmpty()) View.VISIBLE else View.GONE
       binding.historyEntriesContainer.removeAllViews()
-      var targetDateView: View? = null
-      groupEntriesByDate(entries, ZoneId.systemDefault()).forEach { group ->
+      groupEntriesByDate(visibleEntries, ZoneId.systemDefault()).forEach { group ->
         addTimelineDateGroup(binding.historyEntriesContainer, group.date, group.entries) { entry ->
           findNavController().navigate(R.id.readerFragment, Bundle().apply { putString("entryId", entry.id.value) })
-        }
-        if (group.date == selectedDate) targetDateView = binding.historyEntriesContainer.getChildAt(binding.historyEntriesContainer.childCount - 1)
-      }
-      targetDateView?.let { target ->
-        val scrollView = binding.root
-        val targetScrollY = getHistoryTargetScrollY(binding.historyEntriesContainer.top, target.top)
-        scrollView.post {
-          if (!scrollView.isAttachedToWindow) return@post
-          scrollView.smoothScrollTo(
-            0,
-            targetScrollY,
-          )
         }
       }
     }

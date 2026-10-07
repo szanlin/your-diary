@@ -8,14 +8,13 @@
     <string name="pin_required">请输入 PIN。</string>
     <string name="pin_cooldown">验证失败次数过多，请在 %1$d 秒后重试。</string>
     <string name="today_title">今天</string>
-    <string name="today_subtitle">按创建时间倒序</string>
     <string name="today_empty_title">今天还没有记录</string>
     <string name="today_empty_description">点按右下角的加号，记下刚刚发生的事。</string>
     <string name="create_entry">新建日记</string>
     <string name="editor_title">编辑日记</string>
-    <string name="entry_created_time_placeholder">创建时间将在新建时由系统记录</string>
-    <string name="entry_markdown_hint">用 Markdown 记录此刻</string>
-    <string name="auto_save_hint">内容会自动保存；创建时间不可编辑。</string>
+    <string name="finish_editing">完成</string>
+    <string name="entry_created_time_placeholder">正在加载…</string>
+    <string name="entry_markdown_hint">写下此刻</string>
     <string name="select_photos">从相册选择照片</string>
     <string name="insert_emoji">插入表情</string>
     <string name="selected_photo_count_empty">尚未选择照片</string>
@@ -23,9 +22,9 @@
     <string name="photo_default_name">照片 %1$d</string>
     <string name="remove_photo_description">移除照片 %1$d</string>
     <string name="photo_import_failure">未能读取或保存：%1$s。正文和 Tag 已保留。</string>
-    <string name="manage_tags">选择或新建 Tag</string>
+    <string name="manage_tags">Tags</string>
     <string name="reader_title">阅读日记</string>
-    <string name="reader_empty_content">日记正文会以 Markdown 渲染显示在这里。</string>
+    <string name="reader_empty_content">还没有内容</string>
     <string name="reader_photo_failure">有照片无法读取，未显示该照片。</string>
     <string name="reader_photo_description">日记照片 %1$d</string>
     <string name="edit_entry">编辑</string>
@@ -35,6 +34,11 @@
     <string name="create_tag">新建 Tag</string>
     <string name="tag_name_hint">Tag 名称</string>
     <string name="history_title">历史</string>
+    <string name="calendar_title">日历</string>
+    <string name="previous_month">上个月</string>
+    <string name="next_month">下个月</string>
+    <string name="calendar_day_with_entries">%1$s，有日记</string>
+    <string name="calendar_day_without_entries">%1$s，无日记</string>
     <string name="search_entries">搜索正文</string>
     <string name="all_tags">全部 Tag</string>
     <string name="history_empty_title">从时间线找回往事</string>
@@ -77,9 +81,7 @@
     <string name="biometric_use_pin">使用 PIN</string>
     <string name="biometric_enable_failed">未启用生物识别快捷解锁；仍可使用 PIN 访问日记。</string>
     <string name="biometric_unlock_failed">生物识别未完成，请使用 PIN 解锁。</string>
-    <string name="today_calendar_recent_days">最近 7 天</string>
-    <string name="today_calendar_has_entries">%1$s，有日记，点按打开历史</string>
-    <string name="today_calendar_no_entries">%1$s，无日记，点按打开历史</string>
-    <string name="today_calendar_today_has_entries">今天，%1$s，有日记，点按打开历史</string>
-    <string name="today_calendar_today_no_entries">今天，%1$s，无日记，点按打开历史</string>
+    <string name="open_navigation">打开导航菜单</string>
+    <string name="navigate_up">返回上一页</string>
+    <string name="drawer_history_description">浏览历史日记和按 Tag 筛选</string>
 </resources>

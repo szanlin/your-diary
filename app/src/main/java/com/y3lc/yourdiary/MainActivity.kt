@@ -12,13 +12,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import android.view.View
-import android.view.MenuItem
 import com.y3lc.yourdiary.databinding.ActivityMainBinding
 import com.y3lc.yourdiary.diary.data.UnlockedDiaryKey
 import com.y3lc.yourdiary.diary.data.DiaryEntryUseCasesFactory
@@ -74,27 +75,53 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(
             setOf(
                 R.id.todayFragment,
-                R.id.historyFragment,
-                R.id.trashFragment,
-                R.id.settingsFragment,
-                R.id.lockFragment
-            )
+                R.id.lockFragment,
+            ),
+            binding.drawerLayout,
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         binding.fab.setOnClickListener {
             navController.navigate(R.id.editorFragment)
         }
+        binding.calendarFab.setOnClickListener {
+            navigateTo(R.id.calendarFragment)
+        }
+        binding.drawerNavigation.setNavigationItemSelectedListener { item ->
+            val handled = when (item.itemId) {
+                R.id.action_history -> navigateTo(R.id.historyFragment)
+                R.id.action_tags -> navigateToTagFilters()
+                R.id.action_trash -> navigateTo(R.id.trashFragment)
+                R.id.action_settings -> navigateTo(R.id.settingsFragment)
+                else -> false
+            }
+            if (handled) binding.drawerLayout.closeDrawer(GravityCompat.START)
+            handled
+        }
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             isLockedScreen = destination.id == R.id.lockFragment
-            binding.appBar.visibility = if (isLockedScreen) View.GONE else View.VISIBLE
+            val isImmersiveEditor = destination.id == R.id.editorFragment
+            binding.appBar.visibility = if (isLockedScreen || isImmersiveEditor) View.GONE else View.VISIBLE
+            if (isLockedScreen || isImmersiveEditor) binding.drawerLayout.closeDrawer(GravityCompat.START)
+            binding.drawerLayout.setDrawerLockMode(
+                if (isLockedScreen || isImmersiveEditor) DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+                else DrawerLayout.LOCK_MODE_UNLOCKED,
+            )
             binding.fab.visibility = if (destination.id == R.id.todayFragment) {
                 View.VISIBLE
             } else {
                 View.GONE
             }
-            invalidateOptionsMenu()
+            binding.calendarFab.visibility = if (destination.id == R.id.todayFragment) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+            binding.drawerNavigation.visibility = if (isLockedScreen || isImmersiveEditor) View.GONE else View.VISIBLE
+            binding.toolbar.navigationContentDescription = getString(
+                if (destination.id in drawerDestinationIds) R.string.open_navigation else R.string.navigate_up,
+            )
         }
     }
 
@@ -257,28 +284,24 @@ class MainActivity : AppCompatActivity() {
         data class Cooldown(val until: Instant) : PinUnlockResult
     }
 
-    override fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_history -> navigateTo(R.id.historyFragment)
-            R.id.action_trash -> navigateTo(R.id.trashFragment)
-            R.id.action_settings -> navigateTo(R.id.settingsFragment)
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-    override fun onPrepareOptionsMenu(menu: android.view.Menu): Boolean {
-        menu.setGroupVisible(0, !isLockedScreen)
-        return super.onPrepareOptionsMenu(menu)
-    }
-
     private fun navigateTo(destinationId: Int): Boolean {
-        findNavController(R.id.nav_host_fragment_content_main).navigate(destinationId)
+        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        if (navController.currentDestination?.id != destinationId) navController.navigate(destinationId)
         return true
+    }
+
+    private fun navigateToTagFilters(): Boolean {
+        findNavController(R.id.nav_host_fragment_content_main).navigate(
+            R.id.historyFragment,
+            Bundle().apply { putBoolean("focusTagFilters", true) },
+        )
+        return true
+    }
+
+    private companion object {
+        val drawerDestinationIds = setOf(
+            R.id.todayFragment,
+        )
     }
 
     override fun onSupportNavigateUp(): Boolean {

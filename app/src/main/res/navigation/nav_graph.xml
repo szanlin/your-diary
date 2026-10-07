@@ -41,8 +41,14 @@
         android:name="com.y3lc.yourdiary.HistoryFragment"
         android:label="@string/history_title"
         tools:layout="@layout/fragment_history">
+        <argument android:name="focusTagFilters" app:argType="boolean" android:defaultValue="false" />
         <argument android:name="selectedDate" app:argType="string" android:defaultValue="" />
     </fragment>
+    <fragment
+        android:id="@+id/calendarFragment"
+        android:name="com.y3lc.yourdiary.CalendarFragment"
+        android:label="@string/calendar_title"
+        tools:layout="@layout/fragment_calendar" />
     <fragment
         android:id="@+id/trashFragment"
         android:name="com.y3lc.yourdiary.TrashFragment"
