@@ -2,7 +2,6 @@ package com.y3lc.yourdiary
 
 import android.os.Bundle
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,8 +16,6 @@ import com.y3lc.yourdiary.diary.domain.EntryId
 import com.y3lc.yourdiary.diary.domain.Tag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import androidx.core.text.HtmlCompat
-import android.text.TextUtils
 
 class ReaderFragment : Fragment() {
 
@@ -61,13 +58,13 @@ class ReaderFragment : Fragment() {
         ReaderContent(
           entry = entry,
           tags = useCases.listTags().filter { tag -> tag.id in entry.tagIds },
-          photos = entry.photoIds.map { photoId -> decodePhoto(useCases.getPhotoForDisplay(photoId)) },
+          photos = entry.photoIds.map { photoId -> PhotoPreviewDecoder.decode(useCases.getPhotoForDisplay(photoId)) },
         )
       } ?: return@launchDiaryTask
       if (bindingReference == null || !isDiarySessionUnlocked()) return@launchDiaryTask
       val entry = content.entry
       binding.entryCreatedAtText.text = formatEntryTime(entry)
-      binding.entryMarkdownText.text = renderMarkdown(entry.markdown)
+      binding.entryMarkdownText.text = MarkdownRenderer.render(entry.markdown)
       renderTags(content.tags)
       renderPhotos(content.photos)
     }
@@ -107,39 +104,6 @@ class ReaderFragment : Fragment() {
     }
   }
 
-  private fun renderMarkdown(markdown: String): CharSequence {
-    val escaped = TextUtils.htmlEncode(markdown)
-    val html = escaped
-      .replace(Regex("\\*\\*(.+?)\\*\\*"), "<b>$1</b>")
-      .replace(Regex("(?m)^# (.+)$"), "<h2>$1</h2>")
-      .replace("\n", "<br>")
-    return HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_LEGACY)
-  }
-
-  private fun decodePhoto(bytes: ByteArray?): Bitmap? {
-    if (bytes == null) return null
-    return try {
-      val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-      BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
-      if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
-      val sampleSize = calculateSampleSize(bounds.outWidth, bounds.outHeight)
-      BitmapFactory.decodeByteArray(
-        bytes,
-        0,
-        bytes.size,
-        BitmapFactory.Options().apply { inSampleSize = sampleSize },
-      )
-    } catch (_: Exception) {
-      null
-    }
-  }
-
-  private fun calculateSampleSize(width: Int, height: Int): Int {
-    var sampleSize = 1
-    while (width / sampleSize > maxPhotoSide || height / sampleSize > maxPhotoSide) sampleSize *= 2
-    return sampleSize
-  }
-
   override fun onDestroyView() {
     bindingReference = null
     super.onDestroyView()
@@ -151,7 +115,4 @@ class ReaderFragment : Fragment() {
     val photos: List<Bitmap?>,
   )
 
-  private companion object {
-    const val maxPhotoSide = 2_048
-  }
 }

@@ -38,6 +38,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private var isLockedScreen = true
+    private var isPhotoPickerActive = false
+    private var isScreenOffReceiverRegistered = false
     private val pinAttemptLimiter = PinAttemptLimiter()
     private lateinit var mainExecutor: Executor
     private val pinSession by lazy {
@@ -47,7 +49,10 @@ class MainActivity : AppCompatActivity() {
     }
     private val screenOffReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (Intent.ACTION_SCREEN_OFF == intent.action) lockDiary(navigateToLock = true)
+            if (Intent.ACTION_SCREEN_OFF == intent.action) {
+                endPhotoPickerSession()
+                lockDiary(navigateToLock = true)
+            }
         }
     }
     private val biometricKeyStore by lazy { BiometricKeyStore(this) }
@@ -127,17 +132,29 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        registerReceiver(screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
+        if (!isScreenOffReceiverRegistered) {
+            registerReceiver(screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
+            isScreenOffReceiverRegistered = true
+        }
     }
 
     override fun onStop() {
-        lockDiary(navigateToLock = false)
-        unregisterReceiver(screenOffReceiver)
+        if (!isPhotoPickerActive || isFinishing) {
+            endPhotoPickerSession()
+            lockDiary(navigateToLock = false)
+            unregisterScreenOffReceiver()
+        }
         super.onStop()
+    }
+
+    override fun onDestroy() {
+        unregisterScreenOffReceiver()
+        super.onDestroy()
     }
 
     override fun onResume() {
         super.onResume()
+        endPhotoPickerSession()
         if (!pinSession.isUnlocked()) lockDiary(navigateToLock = true)
     }
 
@@ -241,6 +258,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun isDiaryUnlocked(): Boolean = pinSession.isUnlocked()
+
+    fun beginPhotoPickerSession() {
+        isPhotoPickerActive = true
+    }
+
+    fun endPhotoPickerSession() {
+        isPhotoPickerActive = false
+    }
+
+    private fun unregisterScreenOffReceiver() {
+        if (!isScreenOffReceiverRegistered) return
+        unregisterReceiver(screenOffReceiver)
+        isScreenOffReceiverRegistered = false
+    }
 
     fun getUnlockedDiaryKey(): UnlockedDiaryKey? {
         val keyBytes = pinSession.currentKey() ?: return null

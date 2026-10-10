@@ -1,6 +1,7 @@
 <resources>
     <dimen name="reader_photo_spacing">12dp</dimen>
     <dimen name="reader_photo_max_height">480dp</dimen>
+    <dimen name="editor_photo_max_height">240dp</dimen>
     <dimen name="dialog_content_margin">24dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="page_horizontal_margin">24dp</dimen>

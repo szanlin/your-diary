@@ -2,9 +2,12 @@ package com.y3lc.yourdiary
 
 import android.os.Bundle
 import android.net.Uri
+import android.graphics.Bitmap
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.OnBackPressedCallback
@@ -16,7 +19,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.lifecycle.lifecycleScope
 import com.y3lc.yourdiary.databinding.FragmentEditorBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.chip.Chip
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.snackbar.Snackbar
 import com.y3lc.yourdiary.diary.domain.EntryId
 import com.y3lc.yourdiary.diary.domain.DiaryEntry
@@ -59,7 +63,10 @@ class EditorFragment : Fragment() {
     }
   }
   private val pickPhotos = registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
+    (activity as? MainActivity)?.endPhotoPickerSession()
+    if (bindingReference == null || !isDiarySessionUnlocked()) return@registerForActivityResult
     if (uris.isNotEmpty()) importSelectedPhotos(uris)
+    else binding.selectPhotosButton.isEnabled = true
   }
 
   override fun onCreateView(
@@ -77,6 +84,10 @@ class EditorFragment : Fragment() {
       ?: arguments?.getString("entryId")?.takeIf { it.isNotBlank() }?.let(::EntryId)
     wasNewEntry = savedInstanceState?.getBoolean("wasNew") ?: arguments?.getBoolean("wasNew", false) ?: false
     binding.entryMarkdownInput.doAfterTextChanged { markdown -> saveMarkdown(markdown?.toString().orEmpty()) }
+    binding.entryMarkdownInput.setOnFocusChangeListener { _, hasFocus ->
+      if (!hasFocus) showMarkdownPreview()
+    }
+    binding.entryMarkdownPreview.setOnClickListener { showMarkdownInput() }
     binding.entryMarkdownInput.isEnabled = false
     binding.selectPhotosButton.isEnabled = false
     binding.insertEmojiButton.isEnabled = false
@@ -95,7 +106,13 @@ class EditorFragment : Fragment() {
     }
     ViewCompat.requestApplyInsets(binding.root)
     binding.selectPhotosButton.setOnClickListener {
-      pickPhotos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+      (activity as? MainActivity)?.beginPhotoPickerSession()
+      try {
+        pickPhotos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+      } catch (_: IllegalStateException) {
+        (activity as? MainActivity)?.endPhotoPickerSession()
+        binding.selectPhotosButton.isEnabled = true
+      }
     }
     binding.insertEmojiButton.setOnClickListener { showEmojiDialog() }
     binding.manageTagsButton.setOnClickListener { showTagDialog() }
@@ -106,13 +123,6 @@ class EditorFragment : Fragment() {
     super.onSaveInstanceState(outState)
     outState.putString("entryId", entryId?.value)
     outState.putBoolean("wasNew", wasNewEntry)
-  }
-
-  override fun onStop() {
-    sessionState.close()
-    saveJob?.cancel()
-    photoImportJob?.cancel()
-    super.onStop()
   }
 
   private fun loadOrCreateEntry() {
@@ -139,6 +149,7 @@ class EditorFragment : Fragment() {
       renderCreatedAt(entry)
       binding.entryMarkdownInput.setText(entry.markdown)
       binding.entryMarkdownInput.isEnabled = true
+      if (entry.markdown.isBlank()) showMarkdownInput() else showMarkdownPreview()
       renderSelectedPhotos()
       binding.selectPhotosButton.isEnabled = true
       binding.insertEmojiButton.isEnabled = true
@@ -161,6 +172,19 @@ class EditorFragment : Fragment() {
         }
       }
     }
+    binding.entryMarkdownPreview.text = MarkdownRenderer.render(markdown)
+  }
+
+  private fun showMarkdownPreview() {
+    binding.entryMarkdownPreview.text = MarkdownRenderer.render(binding.entryMarkdownInput.text?.toString().orEmpty())
+    binding.entryMarkdownPreview.visibility = View.VISIBLE
+    binding.entryMarkdownInput.visibility = View.GONE
+  }
+
+  private fun showMarkdownInput() {
+    binding.entryMarkdownPreview.visibility = View.GONE
+    binding.entryMarkdownInput.visibility = View.VISIBLE
+    binding.entryMarkdownInput.requestFocus()
   }
 
   private fun renderCreatedAt(entry: DiaryEntry) {
@@ -232,6 +256,7 @@ class EditorFragment : Fragment() {
   }
 
   private fun importSelectedPhotos(uris: List<Uri>) {
+    if (bindingReference == null || !isDiarySessionUnlocked()) return
     val id = entryId ?: return
     val entryUseCases = useCases ?: return
     binding.selectPhotosButton.isEnabled = false
@@ -288,14 +313,48 @@ class EditorFragment : Fragment() {
   private fun renderSelectedPhotos() {
     binding.selectedPhotosText.text = getString(R.string.selected_photo_count, selectedPhotoIds.size)
     binding.selectedPhotosList.removeAllViews()
-    selectedPhotoIds.forEachIndexed { index, photoId ->
-      binding.selectedPhotosList.addView(Chip(requireContext()).apply {
-        text = getString(R.string.photo_default_name, index + 1)
-        isCloseIconVisible = true
-        contentDescription = getString(R.string.remove_photo_description, index + 1)
-        setOnCloseIconClickListener { removeSelectedPhoto(photoId) }
-      })
+    val photoIds = selectedPhotoIds
+    val entryUseCases = useCases ?: return
+    viewLifecycleOwner.lifecycleScope.launch {
+      val previews = withContext(Dispatchers.IO) {
+        photoIds.map { photoId ->
+          PhotoPreview(photoId, PhotoPreviewDecoder.decode(entryUseCases.getPhotoForDisplay(photoId), editorPreviewMaxSide))
+        }
+      }
+      if (!sessionState.canWrite() || !isDiarySessionUnlocked() || bindingReference == null || photoIds != selectedPhotoIds) return@launch
+      previews.forEachIndexed { index, preview -> addPhotoPreview(preview, index) }
+      if (previews.any { it.bitmap == null }) {
+        Snackbar.make(binding.root, R.string.reader_photo_failure, Snackbar.LENGTH_LONG).show()
+      }
     }
+  }
+
+  private fun addPhotoPreview(preview: PhotoPreview, index: Int) {
+    val context = requireContext()
+    binding.selectedPhotosList.addView(MaterialCardView(context).apply {
+      layoutParams = LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT,
+      ).apply { bottomMargin = resources.getDimensionPixelSize(R.dimen.reader_photo_spacing) }
+      radius = 16 * resources.displayMetrics.density
+      addView(LinearLayout(context).apply {
+        orientation = LinearLayout.VERTICAL
+        if (preview.bitmap != null) {
+          addView(ImageView(context).apply {
+            adjustViewBounds = true
+            maxHeight = resources.getDimensionPixelSize(R.dimen.editor_photo_max_height)
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
+            setImageBitmap(preview.bitmap)
+            contentDescription = getString(R.string.reader_photo_description, index + 1)
+          })
+        }
+        addView(MaterialButton(context).apply {
+          text = getString(R.string.remove_photo_description, index + 1)
+          contentDescription = getString(R.string.remove_photo_description, index + 1)
+          setOnClickListener { removeSelectedPhoto(preview.id) }
+        })
+      })
+    })
   }
 
   private fun removeSelectedPhoto(photoId: PhotoId) {
@@ -338,6 +397,7 @@ class EditorFragment : Fragment() {
   }
 
   override fun onDestroyView() {
+    sessionState.close()
     saveJob?.cancel()
     entryCreationJob?.cancel()
     photoImportJob?.cancel()
@@ -352,4 +412,13 @@ class EditorFragment : Fragment() {
     val savedPhotoIds: List<PhotoId>,
     val failedNames: List<String>,
   )
+
+  private data class PhotoPreview(
+    val id: PhotoId,
+    val bitmap: Bitmap?,
+  )
+
+  private companion object {
+    const val editorPreviewMaxSide = 720
+  }
 }
