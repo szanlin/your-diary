@@ -32,6 +32,15 @@ import kotlin.math.abs
 class ExampleInstrumentedTest {
 
   @Test
+  fun lockedScreenShowsDiaryBrandingOverWallpaper() {
+    ActivityScenario.launch(MainActivity::class.java).use {
+      onView(withId(R.id.lockWallpaper)).check(matches(isDisplayed()))
+      onView(withText(R.string.lock_brand_title)).check(matches(isDisplayed()))
+      onView(withText(R.string.lock_brand_motto)).check(matches(isDisplayed()))
+    }
+  }
+
+  @Test
   fun initialPinSetupNavigatesToTodayAndShowsTheOnlyCreateEntryAction() {
     ActivityScenario.launch(MainActivity::class.java).use {
       onView(withId(R.id.pinInput)).perform(replaceText("2468"))

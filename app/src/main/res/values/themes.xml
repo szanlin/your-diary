@@ -10,6 +10,7 @@
         <item name="colorOnSurfaceVariant">@color/diary_ink</item>
         <item name="colorOutline">@color/diary_outline</item>
         <item name="android:fontFamily">sans</item>
+        <item name="android:windowBackground">@drawable/diary_launch_background</item>
     </style>
 
     <style name="Theme.YourDiary" parent="Base.Theme.YourDiary" />

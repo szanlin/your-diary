@@ -6,20 +6,52 @@
     android:paddingStart="@dimen/page_horizontal_margin"
     android:paddingEnd="@dimen/page_horizontal_margin">
 
+    <ImageView
+        android:id="@+id/lockWallpaper"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:contentDescription="@null"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        android:src="@drawable/lock_diary_wallpaper"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:background="@drawable/lock_unlock_panel"
         android:gravity="center_horizontal"
         android:orientation="vertical"
+        android:padding="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
+            android:id="@+id/lockBrandTitle"
+            style="@style/TextAppearance.Material3.HeadlineLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/lock_brand_title"
+            android:textColor="@color/diary_ink" />
+
+        <TextView
+            style="@style/TextAppearance.Material3.TitleMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/lock_brand_motto"
+            android:textColor="@color/diary_ochre" />
+
+        <TextView
             style="@style/TextAppearance.Material3.HeadlineMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
             android:text="@string/lock_title" />
 
         <TextView

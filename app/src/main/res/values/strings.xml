@@ -69,6 +69,8 @@
     <string name="backup_restore_failure">恢复失败：请检查备份密码、文件完整性和格式；本机日记未受影响。</string>
     <string name="lock_title">日记已锁定</string>
     <string name="lock_description">请使用 PIN 解锁后继续。</string>
+    <string name="lock_brand_title">越缦堂日记</string>
+    <string name="lock_brand_motto">细大必书、积玉碎金</string>
     <string name="unlock_with_pin">使用 PIN 解锁</string>
     <string name="enable_biometric">启用生物识别快捷解锁</string>
     <string name="unlock_with_biometric">使用生物识别解锁</string>
